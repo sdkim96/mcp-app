@@ -2,13 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Module",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "modules.rag.retrieve"
+        },
+        {
             "name": "mcp dev server",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/.venv/bin/mcp",
-            "args": ["dev", "server.py"],
+            "args": [
+                "dev",
+                "server.py"
+            ],
             "justMyCode": true,
             "console": "integratedTerminal"
-        }
+        },
     ]
 }
