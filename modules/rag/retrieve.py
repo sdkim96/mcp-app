@@ -15,8 +15,6 @@ from openai import OpenAI
 from ..constants import OPENAI_DIM
 from . import VectorStore, vector_engine, vectorcache
 
-logging.basicConfig(level=logging.INFO)
-
 class Document(BaseModel):
     id: str =  Field(
         default_factory=lambda: str(uuid.uuid4()),
@@ -37,10 +35,6 @@ class Chunk(BaseModel):
     id: str = Field(
         ...,
         description="Unique identifier for the chunk."
-    )
-    vector: List[float] = Field(
-        ...,
-        description="The vector representation of the chunk."
     )
     chunk: str = Field(
         ...,
@@ -85,7 +79,7 @@ class Retrieve:
         engine: Optional[Engine] = None,
         embedding_client: Optional[OpenAI] = None,
         embedding_model: EmbeddingModel = EmbeddingModel.SMALL,
-        cache_manager: vectorcache.CachedVectorStore = vectorcache.CachedInMemoryVectorStore(),
+        cache_manager: vectorcache.CachedVectorStore = vectorcache.CachedInMemoryVectorStore(write_to_json=False),
         logger: Optional[logging.Logger] = None,
 
     ):
@@ -100,7 +94,8 @@ class Retrieve:
         user_name = user_name or 'system'
         self._metafield = {'user_name': user_name}
         self._DIMENSIONS = OPENAI_DIM
-        self._session_maker = scoped_session(sessionmaker(engine))
+        self.logger.info("engine: %s", repr(self.engine))
+        self._session_maker = scoped_session(sessionmaker(self.engine))
         
 
     def add_document(self, document: Document):
@@ -147,7 +142,7 @@ class Retrieve:
             try:
                 stmt = (
                     select(VectorStore)
-                    .where(VectorStore.vector.cosine_distance(vector) < 0.5)
+                    # .where(VectorStore.vector.cosine_distance(vector) < 0.5)
                     .order_by(VectorStore.vector.cosine_distance(vector))
                     .limit(k)
                 )

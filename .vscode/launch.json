@@ -5,7 +5,7 @@
             "name": "Python Debugger: Module",
             "type": "debugpy",
             "request": "launch",
-            "module": "modules.rag.retrieve"
+            "module": "capabilities.tools.rag"
         },
         {
             "name": "mcp dev server",

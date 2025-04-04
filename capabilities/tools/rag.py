@@ -40,3 +40,9 @@ def add_information_to_vectorstore(
     retriever.add_document(document=Document(
         chunk=info
     ))
+
+
+if __name__ == "__main__":
+    query = "내가 제일 좋아하는것"
+    k = 2
+    retrieved_docs = retrieve_augmented_generation_of_me(query, k)

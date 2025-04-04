@@ -1,5 +1,7 @@
 # Uses PGVector
+
 import os
+import logging
 import sqlalchemy
 
 from pgvector.sqlalchemy import Vector
@@ -49,6 +51,10 @@ def _setup():
 
             _Base.metadata.create_all(session.get_bind())
             session.commit()
+
+            resp = session.execute(sqlalchemy.text("SELECT count(*) FROM mcp_vectorstore")).scalar()
+            logging.getLogger(__name__)
+            logging.info(f"pgvector setup complete. Number of records: {resp}")
 
     except Exception as e:
         raise ValueError(f"Failed to setup pgvector: {e}")
