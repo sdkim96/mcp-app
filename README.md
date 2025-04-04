@@ -25,5 +25,10 @@ mcp dev run
 mcp install server.py --env-file .env --with sqlalchemy --with pgvector --with openai --with "psycopg[binary]" --with pydantic --with python-dotenv --with tavily-python
 ```
 
+## Preview of Claude Desktop 
+![First Query](assets/en-image0.png)
+![Second Query](assets/en-image1.png)
+![Result of execution of adding document to db](assets/en-image2.png)
+
 ## TODO
 - Make asynchronous implementations.
