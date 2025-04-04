@@ -1,7 +1,7 @@
 # MCP APP
 
-This repository serves an MCP application with RAG tools. 
-This RAG tools let LLM not only retrieve knowledge from vectorstore but add documents, augmenting size of knowledge that LLM uses.
+This repository serves an MCP application with RAG and Web Searching tools. 
+RAG tools let LLM not only retrieve knowledge from vectorstore but add documents, augmenting size of knowledge that LLM uses.
 
 ## Technology stack
 - ⚙️ MCP Server Application for implementation of MCP server.
@@ -22,9 +22,8 @@ mcp dev run
 
 ```sh
 # You must install all dependencies written in pyproject.toml
-mcp install server.py --env-file .env --with sqlalchemy --with pgvector --with openai --with "psycopg[binary]" --with pydantic --with python-dotenv
+mcp install server.py --env-file .env --with sqlalchemy --with pgvector --with openai --with "psycopg[binary]" --with pydantic --with python-dotenv --with tavily-python
 ```
 
 ## TODO
 - Make asynchronous implementations.
-- Add Web search Tools by using perplexity or tavily (currently, claude desktop doesn't provide searching webtools. )

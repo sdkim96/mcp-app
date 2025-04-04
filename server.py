@@ -11,10 +11,8 @@ server = FastMCP(
     description="A server for my custom tools",
 )
 
-server.add_tool(mytools.add)
-server.add_tool(mytools.subtract)
-server.add_tool(mytools.multiply)
-server.add_tool(mytools.divide)
 
 server.add_tool(mytools.retrieve_augmented_generation_of_me)
 server.add_tool(mytools.add_information_to_vectorstore)
+server.add_tool(mytools.search_web)
+server.add_tool(mytools.crawl_url)

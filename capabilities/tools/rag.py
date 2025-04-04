@@ -6,14 +6,14 @@ def retrieve_augmented_generation_of_me(
     k: int = 2,
 ) -> List[Chunk]:
     """
-    Perform retrieval-augmented generation (RAG) of myself.
+    Perform retrieval-augmented generation (RAG) of myself from vectorstore.
 
     Args:
         query (str): The input query for RAG.
         k (int, optional): Number of documents to retrieve. Defaults to 2.
 
     Returns:
-        str: The generated text based on the retrieved documents and input query.
+        List[Chunk]: List of retrieved document chunks.
     """
     # Retrieve relevant documents
     retriever = Retrieve(
@@ -40,9 +40,3 @@ def add_information_to_vectorstore(
     retriever.add_document(document=Document(
         chunk=info
     ))
-
-
-if __name__ == "__main__":
-    query = "내가 제일 좋아하는것"
-    k = 2
-    retrieved_docs = retrieve_augmented_generation_of_me(query, k)
