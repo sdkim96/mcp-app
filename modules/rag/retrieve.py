@@ -1,15 +1,21 @@
 import uuid
 import logging
 import enum
+from datetime import datetime
+
+from typing import Optional, List
+from pydantic import BaseModel, Field, ConfigDict
+
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from typing import TypeVar, Optional, List, Literal
-from pydantic import BaseModel, Field, ConfigDict
+
 from openai import OpenAI
 
 from ..constants import OPENAI_DIM
 from . import VectorStore, vector_engine, vectorcache
 
+logging.basicConfig(level=logging.INFO)
 
 class Document(BaseModel):
     id: str =  Field(
@@ -44,11 +50,11 @@ class Chunk(BaseModel):
         ...,
         description="Metadata associated with the chunk."
     )
-    created_at: str = Field(
+    created_at: datetime = Field(
         ...,
         description="Timestamp when the chunk was created."
     )
-    updated_at: str = Field(
+    updated_at: datetime = Field(
         ...,
         description="Timestamp when the chunk was last updated."
     )
@@ -76,27 +82,25 @@ class Retrieve:
         self,
         *,
         user_name: Optional[str] = None,
-        engine: Engine,
-        embedding_client: OpenAI,
+        engine: Optional[Engine] = None,
+        embedding_client: Optional[OpenAI] = None,
         embedding_model: EmbeddingModel = EmbeddingModel.SMALL,
-        vector_cache: Literal['inmemory'] = 'inmemory',
+        cache_manager: vectorcache.CachedVectorStore = vectorcache.CachedInMemoryVectorStore(),
         logger: Optional[logging.Logger] = None,
 
     ):
         # public
-        self.engine = engine
-        self.embedding_client = embedding_client
+        self.engine = engine or vector_engine
+        self.embedding_client = embedding_client or OpenAI()
         self.embedding_model = embedding_model
-        self.vector_cache = vector_cache
+        self.cache_manager = cache_manager
         self.logger = logger or logging.getLogger(__name__)
 
         # private
         user_name = user_name or 'system'
         self._metafield = {'user_name': user_name}
         self._DIMENSIONS = OPENAI_DIM
-
-        _factory = sessionmaker(engine)
-        self._session = scoped_session(_factory)
+        self._session_maker = scoped_session(sessionmaker(engine))
         
 
     def add_document(self, document: Document):
@@ -107,9 +111,8 @@ class Retrieve:
         """
         vector = self._embed(document.chunk)
 
-        Session = self._session
-        try:
-            with Session() as session:
+        with self._session_maker() as session:
+            try:
                 session.add(VectorStore(
                     id=document.id,
                     vector=vector,
@@ -117,9 +120,9 @@ class Retrieve:
                     metafield=self._metafield | document.metafield,
                 ))
                 session.commit()
-        except Exception as e:
-            self.logger.error(f"Failed to add document: {e}")
-            Session.rollback()
+            except Exception as e:
+                self.logger.error(f"Failed to add document: {e}")
+                session.rollback()
 
     def similarity_search(
         self,
@@ -140,20 +143,28 @@ class Retrieve:
         """
         vector = self._embed(query)
 
-        Session = self._session
-        try:
-            with Session() as session:
-                results = session.query(
-                    VectorStore
-                ).filter(
-                    VectorStore.vector.distance(vector) < 0.1
-                ).order_by(VectorStore.vector.distance(vector)).limit(k).all()
-                return [Chunk.model_validate(result) for result in results]
+        with self._session_maker() as session:
+            try:
+                stmt = (
+                    select(VectorStore)
+                    .where(VectorStore.vector.cosine_distance(vector) < 0.5)
+                    .order_by(VectorStore.vector.cosine_distance(vector))
+                    .limit(k)
+                )
+                resp = (
+                    session
+                    .execute(stmt)
+                    .scalars()
+                    .all()
+                )
+                self.logger.info(f"Similarity search results: {len(resp)}")
+                result = [Chunk.model_validate(row) for row in resp]
+                return result
         
-        except Exception as e:
-            self.logger.error(f"Failed to perform similarity search: {e}")
-            Session.rollback()
-            return []
+            except Exception as e:
+                self.logger.error(f"Failed to perform similarity search: {e}")
+                session.rollback()
+                return []
 
     def _embed(self, text: str) -> List[float]:
         """Generate embeddings for the given text.
@@ -164,23 +175,28 @@ class Retrieve:
         Returns:
             List[float]: The generated embeddings.
         """
-        cache_repo = self.vector_cache
-        if cache_repo.get_vector(text):
-            return cache_repo.get_vector(text)
-        
-        resp = self.embedding_client.embeddings.create(
-            input=[text],
-            model=self.embedding_model.value,
-            dimensions=self._DIMENSIONS,
-        )
-        vector = resp.data[0].embedding
+        with self.cache_manager as cache:
+            vector = cache.get_vector(text=text)
+            if vector is not None:
+                self.logger.info(f"Retrieved embedding from cache for text: {text}")
+                return vector
+
+            resp = self.embedding_client.embeddings.create(
+                input=[text],
+                model=self.embedding_model.value,
+                dimensions=self._DIMENSIONS,
+            )
+            self.logger.info(f"Generated embedding for text: {text}")
+            vector = resp.data[0].embedding
+
+            cache.set_vector(vector=vector, text=text)
 
         return vector
     
 
 if __name__ == "__main__":
 
-    text = "this is test"
+    text = "I love to play football"
     r = Retrieve(
         user_name='test',
         engine=vector_engine,
@@ -189,4 +205,5 @@ if __name__ == "__main__":
     ).similarity_search(
         query=text,
         k=5,
+        filter=None,
     )
