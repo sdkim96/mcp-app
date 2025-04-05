@@ -1,5 +1,5 @@
 from .rag import (
-    retrieve_augmented_generation_of_me,
+    retrieve_augmented_generation,
     add_information_to_vectorstore,
 )
 
@@ -9,7 +9,7 @@ from .websearch import (
 )
 
 __all__ = [
-    "retrieve_augmented_generation_of_me",
+    "retrieve_augmented_generation",
     "add_information_to_vectorstore",
     "search_web",
     "crawl_url",

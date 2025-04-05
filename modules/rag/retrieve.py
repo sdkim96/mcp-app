@@ -20,6 +20,10 @@ class Document(BaseModel):
         default_factory=lambda: str(uuid.uuid4()),
         description="Unique identifier for the document."
     )
+    title: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Title of the document."
+    )
     chunk: str = Field(
         ...,
         description="The content of the document chunk."
@@ -35,6 +39,10 @@ class Chunk(BaseModel):
     id: str = Field(
         ...,
         description="Unique identifier for the chunk."
+    )
+    title: str = Field(
+        ...,
+        description="Title of the chunk."
     )
     chunk: str = Field(
         ...,

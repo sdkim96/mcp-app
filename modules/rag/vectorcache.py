@@ -42,9 +42,6 @@ class CachedVectorStore(BaseModel, abc.ABC):
         pass
 
 
-class CachedInmemoryVectorStore(CachedVectorStore):
-    ...
-
 class CacheRedisVectorStore(CachedVectorStore):
     ...
 

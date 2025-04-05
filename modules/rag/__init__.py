@@ -27,6 +27,7 @@ class VectorStore(_Base):
     __tablename__ = 'mcp_vectorstore'
 
     id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+    title = sqlalchemy.Column(sqlalchemy.String)
     vector = mapped_column(Vector(OPENAI_DIM))
     chunk = sqlalchemy.Column(sqlalchemy.String)
     metafield = sqlalchemy.Column(sqlalchemy.JSON)

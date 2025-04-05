@@ -12,7 +12,7 @@ server = FastMCP(
 )
 
 
-server.add_tool(mytools.retrieve_augmented_generation_of_me)
+server.add_tool(mytools.retrieve_augmented_generation)
 server.add_tool(mytools.add_information_to_vectorstore)
 server.add_tool(mytools.search_web)
 server.add_tool(mytools.crawl_url)
