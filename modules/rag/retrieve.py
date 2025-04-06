@@ -87,7 +87,7 @@ class Retrieve:
         engine: Optional[Engine] = None,
         embedding_client: Optional[OpenAI] = None,
         embedding_model: EmbeddingModel = EmbeddingModel.SMALL,
-        cache_manager: vectorcache.CachedVectorStore = vectorcache.CachedInMemoryVectorStore(write_to_json=False),
+        cache_manager: vectorcache.CachedVectorStore = vectorcache.CachedInMemoryVectorStore(),
         logger: Optional[logging.Logger] = None,
 
     ):
@@ -99,10 +99,8 @@ class Retrieve:
         self.logger = logger or logging.getLogger(__name__)
 
         # private
-        user_name = user_name or 'system'
-        self._metafield = {'user_name': user_name}
+        self._metafield = {'user_name': user_name or 'system'}
         self._DIMENSIONS = OPENAI_DIM
-        self.logger.info("engine: %s", repr(self.engine))
         self._session_maker = scoped_session(sessionmaker(self.engine))
         
 
@@ -118,6 +116,7 @@ class Retrieve:
             try:
                 session.add(VectorStore(
                     id=document.id,
+                    title=document.title,
                     vector=vector,
                     chunk=document.chunk,
                     metafield=self._metafield | document.metafield,
@@ -129,6 +128,7 @@ class Retrieve:
 
     def similarity_search(
         self,
+        *,
         query: str,
         k: int = 5,
         filter: Optional[dict] = None,
